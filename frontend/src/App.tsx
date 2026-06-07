@@ -9,6 +9,7 @@ import Offers from './pages/Offers';
 import About from './pages/About';
 import Help from './pages/Help';
 import Auth from './pages/Auth';
+import Chat from './components/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import type { CartItem } from './types';
@@ -77,7 +78,7 @@ function App() {
               } 
             />
             <Route 
-              path="/admin" 
+              path="/admin/*" 
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <Admin />
@@ -85,6 +86,7 @@ function App() {
               } 
             />
           </Routes>
+          <Chat />
         </div>
       </Router>
     </AuthProvider>
