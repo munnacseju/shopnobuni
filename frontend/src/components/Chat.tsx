@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { getConversation, sendMessage as sendChatMessage } from '../api';
 
 const Chat = () => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isAdmin } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -12,12 +12,12 @@ const Chat = () => {
     const adminId = 1; // Admin ID from DataLoader
 
     useEffect(() => {
-        if (isOpen && isAuthenticated) {
+        if (isOpen && isAuthenticated && !isAdmin) {
             fetchMessages();
             const interval = setInterval(fetchMessages, 3000);
             return () => clearInterval(interval);
         }
-    }, [isOpen, isAuthenticated]);
+    }, [isOpen, isAuthenticated, isAdmin]);
 
     useEffect(() => {
         scrollToBottom();
@@ -28,8 +28,9 @@ const Chat = () => {
     };
 
     const fetchMessages = async () => {
+        if (!user?.id) return;
         try {
-            const res = await axios.get(`http://localhost:8080/api/chat/conversation?userId1=${user?.id}&userId2=${adminId}`);
+            const res = await getConversation(user.id, adminId);
             setMessages(res.data);
         } catch (err) {
             console.error("Chat error:", err);
@@ -38,16 +39,16 @@ const Chat = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !user?.id) return;
 
         const payload = {
-            sender: { id: user?.id },
+            sender: { id: user.id },
             receiver: { id: adminId },
             content: newMessage
         };
 
         try {
-            await axios.post('http://localhost:8080/api/chat/send', payload);
+            await sendChatMessage(payload);
             setNewMessage('');
             fetchMessages();
         } catch (err) {
@@ -55,7 +56,7 @@ const Chat = () => {
         }
     };
 
-    if (!isAuthenticated) return null;
+    if (!isAuthenticated || isAdmin) return null;
 
     return (
         <div style={{ position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 2000 }}>
