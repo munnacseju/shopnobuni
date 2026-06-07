@@ -2,6 +2,7 @@
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/repositories/ReviewRepository.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/repositories/ProductRepository.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/repositories/UserRepository.java
+/home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/models/ChatMessage.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/controllers/AuthController.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/models/Product.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/controllers/ProductController.java
@@ -10,7 +11,9 @@
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/models/OrderItem.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/models/Order.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/services/OrderService.java
+/home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/controllers/ChatController.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/services/ReviewService.java
+/home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/repositories/ChatRepository.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/controllers/OrderController.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/models/ProductType.java
 /home/jahirul/projects/shopnobuni/backend/src/main/java/com/shopnobuni/shopnobuni/services/ProductService.java
