@@ -1,19 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getConversation, sendMessage as sendChatMessage } from '../api';
+import { getConversation, sendMessage as sendChatMessage, getUnreadCount, markAsRead } from '../api';
 
 const Chat = () => {
     const { user, isAuthenticated, isAdmin } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<any[]>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [unreadCount, setUnreadCount] = useState(0);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
     const adminId = 1; // Admin ID from DataLoader
 
     useEffect(() => {
+        if (isAuthenticated && !isAdmin) {
+            fetchUnreadCount();
+            const interval = setInterval(fetchUnreadCount, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [isAuthenticated, isAdmin, user?.id]);
+
+    useEffect(() => {
         if (isOpen && isAuthenticated && !isAdmin) {
             fetchMessages();
+            handleMarkAsRead();
             const interval = setInterval(fetchMessages, 3000);
             return () => clearInterval(interval);
         }
@@ -27,11 +37,34 @@ const Chat = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    const fetchUnreadCount = async () => {
+        if (!user?.id || isOpen) return;
+        try {
+            const res = await getUnreadCount(user.id);
+            setUnreadCount(res.data);
+        } catch (err) {
+            console.error("Unread count error:", err);
+        }
+    };
+
+    const handleMarkAsRead = async () => {
+        if (!user?.id) return;
+        try {
+            await markAsRead(user.id, adminId);
+            setUnreadCount(0);
+        } catch (err) {
+            console.error("Mark read error:", err);
+        }
+    };
+
     const fetchMessages = async () => {
         if (!user?.id) return;
         try {
             const res = await getConversation(user.id, adminId);
             setMessages(res.data);
+            if (isOpen) {
+                handleMarkAsRead();
+            }
         } catch (err) {
             console.error("Chat error:", err);
         }
@@ -110,22 +143,45 @@ const Chat = () => {
                     </form>
                 </div>
             ) : (
-                <button 
-                    onClick={() => setIsOpen(true)}
-                    className="btn btn-primary" 
-                    style={{ 
-                        width: '60px', 
-                        height: '60px', 
-                        borderRadius: '50%', 
-                        fontSize: '1.5rem', 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        boxShadow: '0 4px 12px rgba(91, 33, 182, 0.3)'
-                    }}
-                >
-                    💬
-                </button>
+                <div style={{ position: 'relative' }}>
+                    <button 
+                        onClick={() => setIsOpen(true)}
+                        className="btn btn-primary" 
+                        style={{ 
+                            width: '60px', 
+                            height: '60px', 
+                            borderRadius: '50%', 
+                            fontSize: '1.5rem', 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            boxShadow: '0 4px 12px rgba(91, 33, 182, 0.3)'
+                        }}
+                    >
+                        💬
+                    </button>
+                    {unreadCount > 0 && (
+                        <div style={{ 
+                            position: 'absolute', 
+                            top: '-5px', 
+                            right: '-5px', 
+                            background: '#ef4444', 
+                            color: 'white', 
+                            borderRadius: '50%', 
+                            width: '24px', 
+                            height: '24px', 
+                            fontSize: '0.75rem', 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            alignItems: 'center',
+                            fontWeight: 'bold',
+                            border: '2px solid white',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}>
+                            {unreadCount}
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );

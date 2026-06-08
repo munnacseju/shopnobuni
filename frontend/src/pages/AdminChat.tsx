@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getConversation, sendMessage as sendChatMessage, getChatParticipants, getAllUsers } from '../api';
+import { getConversation, sendMessage as sendChatMessage, getChatParticipants, getAllUsers, getUnreadCountFrom, markAsRead } from '../api';
 import type { User } from '../types';
+
+interface Participant extends User {
+    unreadCount?: number;
+}
 
 const AdminChat = () => {
     const { user } = useAuth();
-    const [users, setUsers] = useState<User[]>([]);
+    const [users, setUsers] = useState<Participant[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [messages, setMessages] = useState<any[]>([]);
@@ -26,6 +30,7 @@ const AdminChat = () => {
     useEffect(() => {
         if (selectedUser && user?.id) {
             fetchConversation();
+            handleMarkAsRead();
             const interval = setInterval(fetchConversation, 3000);
             return () => clearInterval(interval);
         }
@@ -43,7 +48,15 @@ const AdminChat = () => {
         if (!user?.id) return;
         try {
             const res = await getChatParticipants(user.id);
-            setUsers(res.data);
+            const participants: Participant[] = res.data;
+            
+            // Fetch unread count for each participant
+            const updatedParticipants = await Promise.all(participants.map(async (u) => {
+                const countRes = await getUnreadCountFrom(user.id, u.id);
+                return { ...u, unreadCount: countRes.data };
+            }));
+            
+            setUsers(updatedParticipants);
         } catch (err) {
             console.error("Fetch participants error:", err);
         }
@@ -58,11 +71,23 @@ const AdminChat = () => {
         }
     };
 
+    const handleMarkAsRead = async () => {
+        if (!selectedUser || !user?.id) return;
+        try {
+            await markAsRead(user.id, selectedUser.id);
+            // Optionally update local state for immediate feedback
+            setUsers(prev => prev.map(u => u.id === selectedUser.id ? { ...u, unreadCount: 0 } : u));
+        } catch (err) {
+            console.error("Mark read error:", err);
+        }
+    };
+
     const fetchConversation = async () => {
         if (!selectedUser || !user?.id) return;
         try {
             const res = await getConversation(user.id, selectedUser.id);
             setMessages(res.data);
+            handleMarkAsRead();
         } catch (err) {
             console.error("Fetch conv error:", err);
         }
@@ -162,6 +187,22 @@ const AdminChat = () => {
                                         <div style={{ fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.name}</div>
                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.role.replace('ROLE_', '')}</div>
                                     </div>
+                                    {u.unreadCount !== undefined && u.unreadCount > 0 && (
+                                        <div style={{ 
+                                            background: '#ef4444', 
+                                            color: 'white', 
+                                            borderRadius: '50%', 
+                                            width: '20px', 
+                                            height: '20px', 
+                                            fontSize: '0.7rem', 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            alignItems: 'center',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            {u.unreadCount}
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         )

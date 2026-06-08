@@ -41,4 +41,22 @@ public class ChatController {
     public List<User> getUsersMessagingAdmin(@RequestParam Long adminId) {
         return chatRepository.findDistinctChatParticipants(adminId);
     }
+
+    @GetMapping("/unread/count")
+    public Long getUnreadCount(@RequestParam Long userId) {
+        return chatRepository.countUnreadMessages(userId);
+    }
+
+    @GetMapping("/unread/count-from")
+    public Long getUnreadCountFrom(@RequestParam Long receiverId, @RequestParam Long senderId) {
+        return chatRepository.countUnreadMessagesFromSender(receiverId, senderId);
+    }
+
+    @PostMapping("/mark-read")
+    public ResponseEntity<?> markAsRead(@RequestParam Long receiverId, @RequestParam Long senderId) {
+        List<ChatMessage> unreadMessages = chatRepository.findUnreadMessages(receiverId, senderId);
+        unreadMessages.forEach(m -> m.setRead(true));
+        chatRepository.saveAll(unreadMessages);
+        return ResponseEntity.ok().build();
+    }
 }
