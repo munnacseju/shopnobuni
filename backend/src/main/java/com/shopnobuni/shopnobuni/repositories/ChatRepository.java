@@ -13,4 +13,13 @@ public interface ChatRepository extends JpaRepository<ChatMessage, Long> {
 
     @Query("SELECT DISTINCT u FROM User u JOIN ChatMessage c ON (u.id = c.sender.id OR u.id = c.receiver.id) WHERE (c.sender.id = ?1 OR c.receiver.id = ?1) AND u.id != ?1")
     List<User> findDistinctChatParticipants(Long userId);
+
+    @Query("SELECT COUNT(c) FROM ChatMessage c WHERE c.receiver.id = ?1 AND c.isRead = false")
+    Long countUnreadMessages(Long receiverId);
+
+    @Query("SELECT COUNT(c) FROM ChatMessage c WHERE c.receiver.id = ?1 AND c.sender.id = ?2 AND c.isRead = false")
+    Long countUnreadMessagesFromSender(Long receiverId, Long senderId);
+
+    @Query("SELECT c FROM ChatMessage c WHERE c.receiver.id = ?1 AND c.sender.id = ?2 AND c.isRead = false")
+    List<ChatMessage> findUnreadMessages(Long receiverId, Long senderId);
 }

@@ -19,5 +19,14 @@ export const sendMessage = (message: any) =>
 export const getChatParticipants = (adminId: number) => 
     axios.get(`${API_URL}/chat/admin/users?adminId=${adminId}`);
 
+export const getUnreadCount = (userId: number) => 
+    axios.get(`${API_URL}/chat/unread/count?userId=${userId}`);
+
+export const getUnreadCountFrom = (receiverId: number, senderId: number) => 
+    axios.get(`${API_URL}/chat/unread/count-from?receiverId=${receiverId}&senderId=${senderId}`);
+
+export const markAsRead = (receiverId: number, senderId: number) => 
+    axios.post(`${API_URL}/chat/mark-read?receiverId=${receiverId}&senderId=${senderId}`);
+
 export const getAllUsers = () => 
     axios.get(`${API_URL}/auth/users`);
