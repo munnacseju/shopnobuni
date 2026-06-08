@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { getConversation, sendMessage as sendChatMessage, getChatParticipants, getAllUsers } from '../api';
 import type { User } from '../types';
 
 const AdminChat = () => {
@@ -15,19 +15,21 @@ const AdminChat = () => {
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
     useEffect(() => {
-        fetchChatParticipants();
-        fetchAllUsers();
-        const interval = setInterval(fetchChatParticipants, 5000);
-        return () => clearInterval(interval);
-    }, []);
+        if (user?.id) {
+            fetchChatParticipants();
+            fetchAllUsers();
+            const interval = setInterval(fetchChatParticipants, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [user?.id]);
 
     useEffect(() => {
-        if (selectedUser) {
+        if (selectedUser && user?.id) {
             fetchConversation();
             const interval = setInterval(fetchConversation, 3000);
             return () => clearInterval(interval);
         }
-    }, [selectedUser]);
+    }, [selectedUser, user?.id]);
 
     useEffect(() => {
         scrollToBottom();
@@ -38,8 +40,9 @@ const AdminChat = () => {
     };
 
     const fetchChatParticipants = async () => {
+        if (!user?.id) return;
         try {
-            const res = await axios.get(`http://localhost:8080/api/chat/admin/users?adminId=${user?.id}`);
+            const res = await getChatParticipants(user.id);
             setUsers(res.data);
         } catch (err) {
             console.error("Fetch participants error:", err);
@@ -47,10 +50,8 @@ const AdminChat = () => {
     };
 
     const fetchAllUsers = async () => {
-        // In a real app, you'd have an endpoint for this. For now, we'll just show participants.
-        // But to fulfill the "send to specific user" requirement, we'll allow searching for any user.
         try {
-            const res = await axios.get('http://localhost:8080/api/auth/users'); // Need to create this endpoint
+            const res = await getAllUsers();
             setAllUsers(res.data);
         } catch (err) {
             console.error("Fetch all users error:", err);
@@ -58,9 +59,9 @@ const AdminChat = () => {
     };
 
     const fetchConversation = async () => {
-        if (!selectedUser) return;
+        if (!selectedUser || !user?.id) return;
         try {
-            const res = await axios.get(`http://localhost:8080/api/chat/conversation?userId1=${user?.id}&userId2=${selectedUser.id}`);
+            const res = await getConversation(user.id, selectedUser.id);
             setMessages(res.data);
         } catch (err) {
             console.error("Fetch conv error:", err);
@@ -69,16 +70,16 @@ const AdminChat = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !selectedUser) return;
+        if (!newMessage.trim() || !selectedUser || !user?.id) return;
 
         const payload = {
-            sender: { id: user?.id },
+            sender: { id: user.id },
             receiver: { id: selectedUser.id },
             content: newMessage
         };
 
         try {
-            await axios.post('http://localhost:8080/api/chat/send', payload);
+            await sendChatMessage(payload);
             setNewMessage('');
             fetchConversation();
             fetchChatParticipants(); // Refresh list to show the user if they weren't there

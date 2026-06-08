@@ -27,13 +27,18 @@ public class ChatController {
 
     @PostMapping("/send")
     public ChatMessage sendMessage(@RequestBody ChatMessage message) {
+        if (message.getSender() != null && message.getSender().getId() != null) {
+            userRepository.findById(message.getSender().getId()).ifPresent(message::setSender);
+        }
+        if (message.getReceiver() != null && message.getReceiver().getId() != null) {
+            userRepository.findById(message.getReceiver().getId()).ifPresent(message::setReceiver);
+        }
         message.setTimestamp(new Date());
         return chatRepository.save(message);
     }
 
     @GetMapping("/admin/users")
     public List<User> getUsersMessagingAdmin(@RequestParam Long adminId) {
-        List<Long> userIds = chatRepository.findDistinctChatParticipants(adminId);
-        return userRepository.findAllById(userIds);
+        return chatRepository.findDistinctChatParticipants(adminId);
     }
 }
